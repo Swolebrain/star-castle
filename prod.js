@@ -1,0 +1,587 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Entity = function () {
+  function Entity() {
+    _classCallCheck(this, Entity);
+  }
+
+  _createClass(Entity, [{
+    key: "update",
+    value: function update() {}
+  }, {
+    key: "render",
+    value: function render(ctx) {}
+  }]);
+
+  return Entity;
+}();
+
+exports.default = Entity;
+
+},{}],2:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Entity2 = require("./Entity");
+
+var _Entity3 = _interopRequireDefault(_Entity2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Projectile = function (_Entity) {
+  _inherits(Projectile, _Entity);
+
+  //direction is an angle. speed is in pixels per second.
+  function Projectile(x, y, direction, speed) {
+    _classCallCheck(this, Projectile);
+
+    var _this = _possibleConstructorReturn(this, (Projectile.__proto__ || Object.getPrototypeOf(Projectile)).call(this));
+
+    _this.x = x;
+    _this.y = y;
+    _this.direction = direction;
+    _this.speed = speed;
+    _this.destroyed = false;
+    _this.radius = 2.5;
+    return _this;
+  }
+
+  _createClass(Projectile, [{
+    key: "update",
+    value: function update(dt, shields) {
+      var _this2 = this;
+
+      if (this.destroyed) return;
+      var dx = Math.cos(this.direction) * this.speed;
+      var dy = Math.sin(this.direction) * this.speed;
+      var newX = this.x + dx;
+      var newY = this.y + dy;
+      shields.forEach(function (shield) {
+        _this2.detectCollisionWithShield(shield, newX, newY);
+      });
+
+      this.x = newX;
+      this.y = newY;
+    }
+  }, {
+    key: "render",
+    value: function render(ctx) {
+      if (this.destroyed) return console.log("possible memory leak");
+      ctx.strokeRect(this.x - 2, this.y - 2, this.radius * 2, this.radius * 2);
+    }
+  }, {
+    key: "getDistanceToCenter",
+    value: function getDistanceToCenter(x, y) {
+      var dx = (x || this.x) - window.innerWidth / 2;
+      var dy = (y || this.y) - window.innerHeight / 2;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+  }, {
+    key: "detectCollisionWithShield",
+    value: function detectCollisionWithShield(shield, newX, newY) {
+      if (this.destroyed) return;
+      if (this.isInCollisionRangeWith(shield, newX, newY)) {
+        var collision = shield.checkAndProcessCollision(this);
+        if (collision) this.destroyed = true;
+      }
+    }
+  }, {
+    key: "isInCollisionRangeWith",
+    value: function isInCollisionRangeWith(shieldSection, newX, newY) {
+      return shieldSection.radius > this.getDistanceToCenter(newX, newY) - this.radius && shieldSection.radius < this.getDistanceToCenter() + this.radius;
+    }
+  }, {
+    key: "getPolarAngle",
+    value: function getPolarAngle() {
+      var x = this.x - window.innerWidth / 2,
+          y = window.innerHeight / 2 - this.y;
+      return Math.atan2(y, x);
+    }
+  }]);
+
+  return Projectile;
+}(_Entity3.default);
+
+exports.default = Projectile;
+
+},{"./Entity":1}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _ShieldSection = require('./ShieldSection');
+
+var _ShieldSection2 = _interopRequireDefault(_ShieldSection);
+
+var _Entity2 = require('./Entity');
+
+var _Entity3 = _interopRequireDefault(_Entity2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var numSections = 0;
+
+var Shield = function (_Entity) {
+  _inherits(Shield, _Entity);
+
+  //speed is in degrees per second
+  function Shield(radius, speed) {
+    _classCallCheck(this, Shield);
+
+    var _this = _possibleConstructorReturn(this, (Shield.__proto__ || Object.getPrototypeOf(Shield)).call(this));
+
+    _this.radius = radius;
+    _this.shieldSections = [new _ShieldSection2.default(0, Math.PI * 2, radius)];
+    numSections++;
+    _this.rotationOffset = 0;
+    _this.rotationSpeed = speed * Math.PI / 180;
+    _this.destructionRadians = 200 / radius * Math.PI / 4;
+    //setInterval(()=>console.log(this.shieldSections),2000);
+    return _this;
+  }
+
+  _createClass(Shield, [{
+    key: 'update',
+    value: function update(dt, projectiles) {
+      this.rotationOffset += this.rotationSpeed * dt;
+      if (this.rotationOffset > Math.PI * 2) this.rotationOffset = 0;
+      if (this.shieldSections.length == 0) {
+        this.shieldSections.push(new _ShieldSection2.default(0, Math.PI * 2, this.radius * 1.2));
+        this.radius = this.radius * 1.2;
+      }
+    }
+  }, {
+    key: 'render',
+    value: function render(ctx) {
+      var _this2 = this;
+
+      this.shieldSections.forEach(function (section) {
+        return section.render(ctx, _this2.rotationOffset);
+      });
+      ctx.save();
+      ctx.translate(window.innerWidth / 2, window.innerHeight / 2);
+      ctx.rotate(this.rotationOffset);
+      ctx.fillRect(-1, -10, 2, 20);
+      ctx.restore();
+    }
+  }, {
+    key: 'sections',
+    value: function sections() {
+      return this.shieldSections;
+    }
+  }, {
+    key: 'checkAndProcessCollision',
+    value: function checkAndProcessCollision(projectile) {
+      var projectilePolarAngle = projectile.getPolarAngle();
+      var projectileCanvasAngle = -projectilePolarAngle;
+      if (projectilePolarAngle > 0) {
+        projectileCanvasAngle = Math.PI + (Math.PI - projectilePolarAngle);
+      }
+      var collidedWithASection = false;
+      for (var ssNum = 0; ssNum < this.shieldSections.length; ssNum++) {
+        var ss = this.shieldSections[ssNum];
+        var ctr = 0;
+        while (ctr < 2) {
+          if (projectileCanvasAngle + ctr * Math.PI * 2 > this.rotationOffset + ss.startAngle && projectileCanvasAngle + ctr * Math.PI * 2 < this.rotationOffset + ss.startAngle + ss.arcRadians) {
+            collidedWithASection = true;
+            console.log("hit shield section number " + ssNum);
+            this.processCollision(ssNum, projectileCanvasAngle - this.rotationOffset);
+            break;
+          } else {
+            // console.log(`Failed angle test, projectile angle ${projectileCanvasAngle} not between
+            //   ${this.rotationOffset + ss.startAngle} and ${this.rotationOffset + ss.startAngle + ss.arcRadians}`);
+          }
+          if (collidedWithASection) break;
+
+          ctr++;
+        }
+      }
+      return collidedWithASection;
+    }
+  }, {
+    key: 'processCollision',
+    value: function processCollision(ssNum, prjAngle) {
+      var ss = this.shieldSections[ssNum];
+      if (this.destructionRadians > .95 * ss.arcRadians) {
+        this.shieldSections.splice(ssNum, 1);
+        return;
+      }
+      if (prjAngle < ss.startAngle + this.destructionRadians / 2) {
+        //ss.startAngle += this.destructionRadians;
+        //ss.startAngle = ss.startAngle % (Math.PI*2)
+        ss.arcRadians -= this.destructionRadians;
+        console.log("breaking shield from the start");
+      } else if (prjAngle > ss.startAngle + ss.arcRadians - this.destructionRadians / 2) {
+        ss.arcRadians -= this.destructionRadians;
+        console.log("breaking shield at end");
+      } else {
+        console.log("breaking shield in half");
+        var newSectionEndAngle = ss.startAngle + ss.arcRadians;
+        var newSectionStartAngle = prjAngle + this.destructionRadians / 2;
+        var newSectionArcRadius = newSectionEndAngle - newSectionStartAngle;
+        if (newSectionStartAngle > 2 * Math.PI) newSectionStartAngle %= 2 * Math.PI;
+        var newSection = new _ShieldSection2.default(newSectionStartAngle, newSectionArcRadius, this.radius); //+ (numSections++)*5
+        if (newSection.arcRadians > 0) this.shieldSections.push(newSection);
+
+        var oldSectionEndAngle = prjAngle - this.destructionRadians / 2;
+        ss.arcRadians = oldSectionEndAngle - ss.startAngle;
+        // let oldSectionStart = oldSectionEndAngle - ss.arcRadians;
+        // ss.startAngle = oldSectionStart;
+        if (ss.arcRadians < 0.1) {
+          this.shieldSections.splice(ssNum, 1);
+        }
+      }
+      console.log(this.shieldSections);
+    }
+  }]);
+
+  return Shield;
+}(_Entity3.default);
+
+exports.default = Shield;
+
+},{"./Entity":1,"./ShieldSection":4}],4:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Entity2 = require("./Entity");
+
+var _Entity3 = _interopRequireDefault(_Entity2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ShieldSection = function (_Entity) {
+  _inherits(ShieldSection, _Entity);
+
+  function ShieldSection(startAngle, arcRadians, radius) {
+    _classCallCheck(this, ShieldSection);
+
+    var _this = _possibleConstructorReturn(this, (ShieldSection.__proto__ || Object.getPrototypeOf(ShieldSection)).call(this));
+
+    if (startAngle > 2 * Math.PI) {
+      console.log("#########################alert: creating too big of a start angle");
+    }
+    _this.startAngle = startAngle % (2 * Math.PI);
+    _this.arcRadians = arcRadians;
+    _this.centerX = window.innerWidth / 2;
+    _this.centerY = window.innerHeight / 2;
+    _this.radius = radius;
+    return _this;
+  }
+
+  _createClass(ShieldSection, [{
+    key: "render",
+    value: function render(ctx, offset) {
+      ctx.beginPath();
+      ctx.arc(this.centerX, this.centerY, this.radius, this.startAngle + offset, this.startAngle + this.arcRadians + offset);
+
+      ctx.stroke();
+      ctx.closePath();
+    }
+  }]);
+
+  return ShieldSection;
+}(_Entity3.default);
+
+exports.default = ShieldSection;
+
+},{"./Entity":1}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Projectile = exports.Entity = exports.ShieldSection = exports.Shield = undefined;
+
+var _Shield = require('./Shield');
+
+var _Shield2 = _interopRequireDefault(_Shield);
+
+var _ShieldSection = require('./ShieldSection');
+
+var _ShieldSection2 = _interopRequireDefault(_ShieldSection);
+
+var _Entity = require('./Entity');
+
+var _Entity2 = _interopRequireDefault(_Entity);
+
+var _Projectile = require('./Projectile');
+
+var _Projectile2 = _interopRequireDefault(_Projectile);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.Shield = _Shield2.default;
+exports.ShieldSection = _ShieldSection2.default;
+exports.Entity = _Entity2.default;
+exports.Projectile = _Projectile2.default;
+
+},{"./Entity":1,"./Projectile":2,"./Shield":3,"./ShieldSection":4}],6:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports.default = function () {
+  return new Promise(function (resolve, reject) {
+    var imageUrls = ['assets/img/ship_sm.png', 'assets/img/flame_sm.png'];
+    var numLoaded = 0;
+    var imgLoadHandler = function imgLoadHandler() {
+      numLoaded++;
+      if (numLoaded === imageUrls.length) {
+        resolve(images);
+      }
+    };
+    var images = {};
+    imageUrls.forEach(function (uri, idx) {
+      var img = new Image();
+      img.src = imageUrls[idx];
+      img.onload = imgLoadHandler;
+      images[uri] = img;
+    });
+  });
+};
+
+},{}],7:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Controls = function () {
+  function Controls() {
+    var _this = this;
+
+    _classCallCheck(this, Controls);
+
+    window.addEventListener("keydown", function (e) {
+      console.log(e.keyCode);
+      if (e.keyCode == 37) _this.x = -1;
+      if (e.keyCode == 38) _this.y = -1;
+      if (e.keyCode == 39) _this.x = 1;
+      if (e.keyCode == 40) _this.y = 1;
+    });
+    // window.addEventListener("keyup", e=>{
+    //   console.log(e.keyCode);
+    //   if (e.keyCode == 37)this.x = 0
+    //   if (e.keyCode == 38) this.y = 0;
+    //   if (e.keyCode == 39) this.x = 0;
+    //   if (e.keyCode == 40) this.y = 0;
+    // });
+    this.x = 0;
+    this.y = 0;
+  }
+
+  _createClass(Controls, [{
+    key: "getAngle",
+    value: function getAngle() {
+      return Math.atan2(this.y, this.x);
+    }
+  }, {
+    key: "update",
+    value: function update() {}
+  }, {
+    key: "render",
+    value: function render() {}
+  }]);
+
+  return Controls;
+}();
+
+exports.default = Controls;
+
+},{}],8:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _Entities = require('../Entities');
+
+var _Controls = require('./Controls');
+
+var _Controls2 = _interopRequireDefault(_Controls);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Ship = function (_Entity) {
+  _inherits(Ship, _Entity);
+
+  function Ship(images, speed, x, y) {
+    _classCallCheck(this, Ship);
+
+    var _this = _possibleConstructorReturn(this, (Ship.__proto__ || Object.getPrototypeOf(Ship)).call(this));
+
+    _this.sprite = images['assets/img/ship_sm.png'];
+    _this.propulsionSprite = images['assets/img/flame_sm.png'];
+    _this.spriteScale = 0.75;
+    _this.speed = speed;
+    var _window = window,
+        w = _window.innerWidth,
+        h = _window.innerHeight;
+
+    _this.x = x || (Math.random() * w * 0.2 - w * 0.1 + w) % w;
+    _this.y = y || (Math.random() * h * 0.2 - h * 0.1 + h) % h;
+    console.log('Spawning ship at ' + _this.x + ', ' + _this.y);
+    _this.controls = new _Controls2.default();
+    return _this;
+  }
+
+  _createClass(Ship, [{
+    key: 'update',
+    value: function update(dt) {
+      this.x += Math.cos(this.controls.getAngle()) * this.speed * dt;
+      this.y += Math.sin(this.controls.getAngle()) * this.speed * dt;
+      // console.log(this.x + " vs "+window.innerWidth);
+      if (this.x > window.innerWidth) {
+        this.x = 0;
+        console.log('went to the right');
+      } else if (this.x < 0) {
+        this.x = window.innerWidth;
+        console.log('went to the left');
+      }
+
+      if (this.y > window.innerHeight) this.y = 0;else if (this.y < 0) this.y = window.innerHeight;
+    }
+  }, {
+    key: 'render',
+    value: function render(ctx) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.controls.getAngle());
+      ctx.drawImage(this.sprite, -this.sprite.width * this.spriteScale / 2, -this.sprite.height * this.spriteScale / 2, this.sprite.width * this.spriteScale, this.sprite.height * this.spriteScale);
+
+      ctx.restore();
+    }
+  }]);
+
+  return Ship;
+}(_Entities.Entity);
+
+exports.default = Ship;
+
+},{"../Entities":5,"./Controls":7}],9:[function(require,module,exports){
+'use strict';
+
+var _Entities = require('./Entities');
+
+var _Preloader = require('./Preloader');
+
+var _Preloader2 = _interopRequireDefault(_Preloader);
+
+var _Ship = require('./Ship/Ship.js');
+
+var _Ship2 = _interopRequireDefault(_Ship);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var images;
+(0, _Preloader2.default)().then(function (img) {
+  images = img;
+  game();
+});
+
+var game = function game() {
+
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  var shields = [new _Entities.Shield(250, 12), new _Entities.Shield(200, 10), new _Entities.Shield(150, 6)];
+  var projectiles = [];
+  var player = new _Ship2.default(images, 100);
+
+  var loopStart = new Date().getTime();
+  var loop = function loop() {
+    var loopDuration = new Date().getTime() - loopStart;
+    loopStart = new Date().getTime();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var dt = loopDuration / 1000;
+    projectiles.forEach(function (projectile) {
+      return projectile.update(dt, shields);
+    });
+    shields.forEach(function (shield) {
+      return shield.update(dt);
+    });
+    projectiles = projectiles.filter(function (projectile) {
+      return !projectile.destroyed;
+    });
+    player.update(dt);
+
+    projectiles.forEach(function (projectile) {
+      return projectile.render(ctx);
+    });
+    shields.forEach(function (shield) {
+      return shield.render(ctx);
+    });
+    player.render(ctx);
+
+    window.requestAnimationFrame(loop);
+  };
+  loop();
+  window.addEventListener('click', function (e) {
+    var clickX = e.clientX - window.innerWidth / 2;
+    var clickY = window.innerHeight / 2 - e.clientY;
+    var theta = Math.atan2(clickY, clickX);
+    projectiles.push(new _Entities.Projectile(e.clientX, e.clientY, -Math.PI - theta, 20));
+    console.log('x: ' + clickX + ', y: ' + clickY + ', theta: ' + theta);
+  });
+};
+
+},{"./Entities":5,"./Preloader":6,"./Ship/Ship.js":8}]},{},[9]);

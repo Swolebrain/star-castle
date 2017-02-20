@@ -1,0 +1,33 @@
+{
+  "name": "star-castle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "watchify js/main.js -o prod.js --poll=100ms"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Swolebrain/star-castle.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Swolebrain/star-castle/issues"
+  },
+  "homepage": "https://github.com/Swolebrain/star-castle#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.22.0",
+    "babelify": "^7.3.0",
+    "uglifyjs": "^2.4.10",
+    "watchify": "^3.9.0"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify", {   "presets": [ "es2015" ]  }
+      ]
+    ]
+  }
+}
