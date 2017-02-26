@@ -385,59 +385,6 @@ exports.default = function () {
 };
 
 },{}],7:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Controls = function () {
-  function Controls() {
-    var _this = this;
-
-    _classCallCheck(this, Controls);
-
-    window.addEventListener("keydown", function (e) {
-      console.log(e.keyCode);
-      if (e.keyCode == 37) _this.x = -1;
-      if (e.keyCode == 38) _this.y = -1;
-      if (e.keyCode == 39) _this.x = 1;
-      if (e.keyCode == 40) _this.y = 1;
-    });
-    // window.addEventListener("keyup", e=>{
-    //   console.log(e.keyCode);
-    //   if (e.keyCode == 37)this.x = 0
-    //   if (e.keyCode == 38) this.y = 0;
-    //   if (e.keyCode == 39) this.x = 0;
-    //   if (e.keyCode == 40) this.y = 0;
-    // });
-    this.x = 0;
-    this.y = 0;
-  }
-
-  _createClass(Controls, [{
-    key: "getAngle",
-    value: function getAngle() {
-      return Math.atan2(this.y, this.x);
-    }
-  }, {
-    key: "update",
-    value: function update() {}
-  }, {
-    key: "render",
-    value: function render() {}
-  }]);
-
-  return Controls;
-}();
-
-exports.default = Controls;
-
-},{}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -448,9 +395,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _Entities = require('../Entities');
 
-var _Controls = require('./Controls');
+var _TouchControls = require('../ui/TouchControls');
 
-var _Controls2 = _interopRequireDefault(_Controls);
+var _TouchControls2 = _interopRequireDefault(_TouchControls);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -468,6 +415,10 @@ var Ship = function (_Entity) {
 
     var _this = _possibleConstructorReturn(this, (Ship.__proto__ || Object.getPrototypeOf(Ship)).call(this));
 
+    _this.fireProjectile = function () {
+      _this.projectiles.push(new _Entities.Projectile(_this.x, _this.y, _this.controls.getAngle(), 20));
+    };
+
     _this.sprite = images['assets/img/ship_sm.png'];
     _this.propulsionSprite = images['assets/img/flame_sm.png'];
     _this.spriteScale = 0.75;
@@ -479,35 +430,43 @@ var Ship = function (_Entity) {
     _this.x = x || (Math.random() * w * 0.2 - w * 0.1 + w) % w;
     _this.y = y || (Math.random() * h * 0.2 - h * 0.1 + h) % h;
     console.log('Spawning ship at ' + _this.x + ', ' + _this.y);
-    _this.controls = new _Controls2.default();
+    _this.controls = new _TouchControls2.default(_this.fireProjectile);
+    _this.projectiles = [];
     return _this;
   }
 
   _createClass(Ship, [{
     key: 'update',
-    value: function update(dt) {
+    value: function update(dt, shields) {
+      this.projectiles.forEach(function (projectile) {
+        return projectile.update(dt, shields);
+      });
+      this.projectiles = this.projectiles.filter(function (projectile) {
+        return !projectile.destroyed;
+      });
       this.x += Math.cos(this.controls.getAngle()) * this.speed * dt;
       this.y += Math.sin(this.controls.getAngle()) * this.speed * dt;
       // console.log(this.x + " vs "+window.innerWidth);
       if (this.x > window.innerWidth) {
         this.x = 0;
-        console.log('went to the right');
       } else if (this.x < 0) {
         this.x = window.innerWidth;
-        console.log('went to the left');
       }
-
       if (this.y > window.innerHeight) this.y = 0;else if (this.y < 0) this.y = window.innerHeight;
     }
   }, {
     key: 'render',
     value: function render(ctx) {
+      this.projectiles.forEach(function (projectile) {
+        return projectile.render(ctx);
+      });
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.controls.getAngle());
       ctx.drawImage(this.sprite, -this.sprite.width * this.spriteScale / 2, -this.sprite.height * this.spriteScale / 2, this.sprite.width * this.spriteScale, this.sprite.height * this.spriteScale);
 
       ctx.restore();
+      if (this.controls.render) this.controls.render(ctx);
     }
   }]);
 
@@ -516,7 +475,7 @@ var Ship = function (_Entity) {
 
 exports.default = Ship;
 
-},{"../Entities":5,"./Controls":7}],9:[function(require,module,exports){
+},{"../Entities":5,"../ui/TouchControls":9}],8:[function(require,module,exports){
 'use strict';
 
 var _Entities = require('./Entities');
@@ -537,15 +496,25 @@ var images;
   game();
 });
 
+var initializeEntities = function initializeEntities() {
+  return {
+    shields: [new _Entities.Shield(250, 12), new _Entities.Shield(200, 10), new _Entities.Shield(150, 6)],
+    projectiles: [],
+    player: new _Ship2.default(images, 100)
+  };
+};
+
 var game = function game() {
 
   var canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  var shields = [new _Entities.Shield(250, 12), new _Entities.Shield(200, 10), new _Entities.Shield(150, 6)];
-  var projectiles = [];
-  var player = new _Ship2.default(images, 100);
+
+  var _initializeEntities = initializeEntities(canvas),
+      shields = _initializeEntities.shields,
+      projectiles = _initializeEntities.projectiles,
+      player = _initializeEntities.player;
 
   var loopStart = new Date().getTime();
   var loop = function loop() {
@@ -553,20 +522,14 @@ var game = function game() {
     loopStart = new Date().getTime();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     var dt = loopDuration / 1000;
-    projectiles.forEach(function (projectile) {
-      return projectile.update(dt, shields);
-    });
+    //projectiles.forEach(projectile=>projectile.update(dt, shields));
     shields.forEach(function (shield) {
       return shield.update(dt);
     });
-    projectiles = projectiles.filter(function (projectile) {
-      return !projectile.destroyed;
-    });
-    player.update(dt);
+    //projectiles = projectiles.filter(projectile=>!projectile.destroyed);
+    player.update(dt, shields);
 
-    projectiles.forEach(function (projectile) {
-      return projectile.render(ctx);
-    });
+    // projectiles.forEach(projectile=>projectile.render(ctx));
     shields.forEach(function (shield) {
       return shield.render(ctx);
     });
@@ -575,13 +538,105 @@ var game = function game() {
     window.requestAnimationFrame(loop);
   };
   loop();
-  window.addEventListener('click', function (e) {
-    var clickX = e.clientX - window.innerWidth / 2;
-    var clickY = window.innerHeight / 2 - e.clientY;
-    var theta = Math.atan2(clickY, clickX);
-    projectiles.push(new _Entities.Projectile(e.clientX, e.clientY, -Math.PI - theta, 20));
-    console.log('x: ' + clickX + ', y: ' + clickY + ', theta: ' + theta);
-  });
 };
 
-},{"./Entities":5,"./Preloader":6,"./Ship/Ship.js":8}]},{},[9]);
+},{"./Entities":5,"./Preloader":6,"./Ship/Ship.js":7}],9:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var TouchControls = function () {
+  function TouchControls(action, color) {
+    var _this = this;
+
+    _classCallCheck(this, TouchControls);
+
+    this.onTouchStart = function (e) {
+      Array.prototype.forEach.call(e.changedTouches, function (touch) {
+        //console.log(touch.clientX < window.innerWidth/2);
+        if (_this.leftStickTouchID == null && touch.clientX < window.innerWidth / 2) {
+          _this.leftStickTouchID = touch.identifier;
+          //console.log(this.leftStickTouchID);
+          _this.leftStickAnchor = { x: touch.clientX, y: touch.clientY };
+          _this.leftStickPosition = { x: touch.clientX, y: touch.clientY };
+        } else {
+          //console.log("tappy?");
+          _this.actionButton();
+        }
+      });
+    };
+
+    this.onTouchMove = function (e) {
+
+      if (_this.leftStickTouchID == null) return;
+      Array.prototype.forEach.call(e.changedTouches, function (touch) {
+        if (touch.identifier != _this.leftStickTouchID) return;
+        _this.leftStickPosition = { x: touch.clientX, y: touch.clientY };
+        _this.lastAngle = Math.atan2(_this.leftStickPosition.y - _this.leftStickAnchor.y, _this.leftStickPosition.x - _this.leftStickAnchor.x);
+      });
+    };
+
+    this.onTouchEnd = function (e) {
+      Array.prototype.forEach.call(e.changedTouches, function (touch) {
+        if (touch.identifier == _this.leftStickTouchID) {
+          _this.leftStickTouchID = null;
+          _this.leftStickAnchor = null;
+          _this.leftStickPosition = null;
+        }
+      });
+    };
+
+    //this property is for keeping track of the touch id of the left stick
+    this.leftStickTouchID = null;
+    this.leftStickAnchor = null;
+    this.leftStickPosition = null;
+    this.color = color || 'cyan';
+    if (!'createTouch' in document) return;
+    window.addEventListener('touchstart', this.onTouchStart, false);
+    window.addEventListener('touchmove', this.onTouchMove, false);
+    window.addEventListener('touchend', this.onTouchEnd, false);
+    this.circleDimensions = Math.round(Math.max(window.innerWidth * 0.06, window.innerHeight * 0.06));
+    this.lastAngle = 0;
+    this.actionButton = action;
+  }
+
+  _createClass(TouchControls, [{
+    key: 'getAngle',
+    value: function getAngle() {
+      return this.lastAngle;
+    }
+  }, {
+    key: 'update',
+    value: function update() {}
+  }, {
+    key: 'render',
+    value: function render(ctx) {
+      if (this.leftStickTouchID == null) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = this.color;
+      //draw big circle anchor
+      ctx.ellipse(this.leftStickAnchor.x, this.leftStickAnchor.y, this.circleDimensions, this.circleDimensions, 0, 0, Math.PI * 2);
+      //draw little circle anchor
+      ctx.stroke();
+      ctx.closePath();
+      ctx.beginPath();
+      ctx.ellipse(this.leftStickPosition.x, this.leftStickPosition.y, this.circleDimensions * 0.6, this.circleDimensions * 0.6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.closePath();
+      ctx.restore();
+    }
+  }]);
+
+  return TouchControls;
+}();
+
+exports.default = TouchControls;
+
+},{}]},{},[8]);
