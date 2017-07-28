@@ -115,7 +115,8 @@ var Projectile = function (_Entity) {
     value: function getPolarAngle() {
       var x = this.x - window.innerWidth / 2,
           y = window.innerHeight / 2 - this.y;
-      return Math.atan2(y, x);
+      var angle = Math.atan2(y, x);
+      return (Math.PI - angle + Math.PI) % (2 * Math.PI);
     }
   }]);
 
@@ -161,6 +162,7 @@ var Shield = function (_Entity) {
     var _this = _possibleConstructorReturn(this, (Shield.__proto__ || Object.getPrototypeOf(Shield)).call(this));
 
     _this.radius = radius;
+    console.log(_this.radius);
     _this.shieldSections = [new _ShieldSection2.default(0, Math.PI * 2, radius)];
     numSections++;
     _this.rotationOffset = 0;
@@ -203,10 +205,11 @@ var Shield = function (_Entity) {
     key: 'checkAndProcessCollision',
     value: function checkAndProcessCollision(projectile) {
       var projectilePolarAngle = projectile.getPolarAngle();
-      var projectileCanvasAngle = -projectilePolarAngle;
-      if (projectilePolarAngle > 0) {
-        projectileCanvasAngle = Math.PI + (Math.PI - projectilePolarAngle);
-      }
+      var projectileCanvasAngle = projectilePolarAngle;
+      // let projectileCanvasAngle = -projectilePolarAngle;
+      // if (projectilePolarAngle > 0){
+      //   projectileCanvasAngle = Math.PI + (Math.PI - projectilePolarAngle);
+      // }
       var collidedWithASection = false;
       for (var ssNum = 0; ssNum < this.shieldSections.length; ssNum++) {
         var ss = this.shieldSections[ssNum];
@@ -366,7 +369,7 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function () {
   return new Promise(function (resolve, reject) {
-    var imageUrls = ['assets/img/ship_sm.png', 'assets/img/flame_sm.png'];
+    var imageUrls = ['assets/img/ship_sm.png', 'assets/img/flame_sm.png', 'assets/img/cannon-sm.png'];
     var numLoaded = 0;
     var imgLoadHandler = function imgLoadHandler() {
       numLoaded++;
@@ -419,10 +422,33 @@ var Ship = function (_Entity) {
       _this.projectiles.push(new _Entities.Projectile(_this.x, _this.y, _this.controls.getAngle(), 20));
     };
 
+    _this.checkInsideShields = function (shields) {
+      var radius = _this.spriteScale * _this.sprite.width / 2;
+      var polarAngle = _this.getPolarAngle();
+      var thisDistanceToCenter = Math.round(_this.getDistanceToCenter());
+      // console.log(polarAngle);
+      var ret = null;
+      shields.forEach(function (shield, i) {
+        if (ret) return;
+        shield.shieldSections.forEach(function (shieldSection, i2) {
+          // console.log(shieldSection.startAngle);
+          if (shieldSection.startAngle < polarAngle && shieldSection.startAngle + shieldSection.arcRadians > polarAngle && thisDistanceToCenter - radius < shieldSection.radius) {
+            // console.log('Collided with shield', i, "section", i2);
+            ret = { x: Math.cos(polarAngle) * 10,
+              y: Math.sin(polarAngle) * 10
+            };
+            return;
+          }
+        });
+      });
+      return ret;
+    };
+
     _this.sprite = images['assets/img/ship_sm.png'];
     _this.propulsionSprite = images['assets/img/flame_sm.png'];
-    _this.spriteScale = 0.75;
+    _this.spriteScale = 0.5;
     _this.speed = speed;
+    _this.bounceSpeed = { x: 0, y: 0 };
     var _window = window,
         w = _window.innerWidth,
         h = _window.innerHeight;
@@ -446,7 +472,12 @@ var Ship = function (_Entity) {
       });
       this.x += Math.cos(this.controls.getAngle()) * this.speed * dt;
       this.y += Math.sin(this.controls.getAngle()) * this.speed * dt;
-      // console.log(this.x + " vs "+window.innerWidth);
+      var bounce = this.checkInsideShields(shields);
+      if (bounce) {
+        console.log(bounce);
+        this.bounceSpeed = bounce;
+      }
+      this.processBounceSpeed();
       if (this.x > window.innerWidth) {
         this.x = 0;
       } else if (this.x < 0) {
@@ -463,10 +494,35 @@ var Ship = function (_Entity) {
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.controls.getAngle());
+      ctx.drawImage(this.propulsionSprite, -(this.sprite.width / 2 + this.propulsionSprite.width / 1.15) * this.spriteScale, -this.propulsionSprite.height * this.spriteScale / 2, this.propulsionSprite.width * this.spriteScale, this.propulsionSprite.height * this.spriteScale);
       ctx.drawImage(this.sprite, -this.sprite.width * this.spriteScale / 2, -this.sprite.height * this.spriteScale / 2, this.sprite.width * this.spriteScale, this.sprite.height * this.spriteScale);
-
       ctx.restore();
       if (this.controls.render) this.controls.render(ctx);
+    }
+  }, {
+    key: 'processBounceSpeed',
+    value: function processBounceSpeed() {
+      this.x += this.bounceSpeed.x;
+      this.y += this.bounceSpeed.y;
+      this.bounceSpeed.x *= .9;
+      this.bounceSpeed.y *= .9;
+      if (Math.abs(this.bounceSpeed.x) < 0.01) this.bounceSpeed.x = 0;
+      if (Math.abs(this.bounceSpeed.y) < 0.01) this.bounceSpeed.y = 0;
+    }
+  }, {
+    key: 'getDistanceToCenter',
+    value: function getDistanceToCenter(x, y) {
+      var dx = (x || this.x) - window.innerWidth / 2;
+      var dy = (y || this.y) - window.innerHeight / 2;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+  }, {
+    key: 'getPolarAngle',
+    value: function getPolarAngle() {
+      var x = this.x - window.innerWidth / 2,
+          y = window.innerHeight / 2 - this.y;
+      var angle = Math.atan2(y, x);
+      return (Math.PI - angle + Math.PI) % (2 * Math.PI);
     }
   }]);
 
@@ -496,9 +552,10 @@ var images;
   game();
 });
 
+var radius1 = Math.round(Math.min(window.innerWidth, window.innerHeight) * .2);
 var initializeEntities = function initializeEntities() {
   return {
-    shields: [new _Entities.Shield(250, 12), new _Entities.Shield(200, 10), new _Entities.Shield(150, 6)],
+    shields: [new _Entities.Shield(radius1, 12), new _Entities.Shield(radius1 * 0.66, 10), new _Entities.Shield(radius1 * 0.33, 6)],
     projectiles: [],
     player: new _Ship2.default(images, 100)
   };
@@ -506,7 +563,8 @@ var initializeEntities = function initializeEntities() {
 
 var game = function game() {
 
-  var canvas = document.getElementById('canvas');
+  var canvas = document.createElement('canvas');
+  document.body.appendChild(canvas);
   var ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -573,7 +631,6 @@ var TouchControls = function () {
     };
 
     this.onTouchMove = function (e) {
-
       if (_this.leftStickTouchID == null) return;
       Array.prototype.forEach.call(e.changedTouches, function (touch) {
         if (touch.identifier != _this.leftStickTouchID) return;
@@ -583,6 +640,7 @@ var TouchControls = function () {
     };
 
     this.onTouchEnd = function (e) {
+      e.preventDefault();
       Array.prototype.forEach.call(e.changedTouches, function (touch) {
         if (touch.identifier == _this.leftStickTouchID) {
           _this.leftStickTouchID = null;

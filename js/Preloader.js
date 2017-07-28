@@ -2,7 +2,8 @@ export default function(){
   return new Promise( (resolve, reject)=>{
     const imageUrls = [
       'assets/img/ship_sm.png',
-      'assets/img/flame_sm.png'
+      'assets/img/flame_sm.png',
+      'assets/img/cannon-sm.png'
     ];
     let numLoaded = 0;
     const imgLoadHandler = ()=>{

@@ -48,6 +48,7 @@ export default class Projectile extends Entity{
   getPolarAngle(){
     let x = this.x - window.innerWidth/2,
         y = window.innerHeight/2 - this.y;
-    return Math.atan2(y, x);
+    let angle =  Math.atan2(y, x);
+    return (Math.PI - angle + Math.PI) % (2* Math.PI);
   }
 }

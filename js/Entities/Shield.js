@@ -7,6 +7,7 @@ export default class Shield extends Entity{
   constructor(radius, speed){
     super();
     this.radius = radius;
+    console.log(this.radius);
     this.shieldSections = [ new ShieldSection(0, Math.PI*2, radius)];
     numSections++;
     this.rotationOffset = 0;
@@ -35,10 +36,11 @@ export default class Shield extends Entity{
   }
   checkAndProcessCollision(projectile){
     let projectilePolarAngle = projectile.getPolarAngle();
-    let projectileCanvasAngle = -projectilePolarAngle;
-    if (projectilePolarAngle > 0){
-      projectileCanvasAngle = Math.PI + (Math.PI - projectilePolarAngle);
-    }
+    let projectileCanvasAngle = projectilePolarAngle;
+    // let projectileCanvasAngle = -projectilePolarAngle;
+    // if (projectilePolarAngle > 0){
+    //   projectileCanvasAngle = Math.PI + (Math.PI - projectilePolarAngle);
+    // }
     let collidedWithASection = false;
     for (var ssNum = 0; ssNum < this.shieldSections.length; ssNum++){
       let ss = this.shieldSections[ssNum];

@@ -9,15 +9,17 @@ preloader().then(img=>{
   game();
 });
 
+let radius1 = Math.round(Math.min(window.innerWidth, window.innerHeight)*.2);
 const initializeEntities = ()=>({
-  shields: [new Shield(250, 12), new Shield(200, 10), new Shield(150, 6)],
+  shields: [new Shield(radius1, 12), new Shield(radius1*0.66, 10), new Shield(radius1*0.33, 6)],
   projectiles: [],
   player: new Ship(images, 100)
 });
 
 const game = ()=>{
 
-  const canvas = document.getElementById('canvas');
+  const canvas = document.createElement('canvas');
+  document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;

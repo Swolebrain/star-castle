@@ -29,7 +29,6 @@ export default class TouchControls{
     });
   }
   onTouchMove = e=>{
-
     if (this.leftStickTouchID == null) return;
     Array.prototype.forEach.call(e.changedTouches, touch=>{
       if (touch.identifier != this.leftStickTouchID) return;
@@ -39,6 +38,7 @@ export default class TouchControls{
     });
   }
   onTouchEnd = e=>{
+    e.preventDefault();
     Array.prototype.forEach.call(e.changedTouches, touch=>{
       if (touch.identifier == this.leftStickTouchID){
         this.leftStickTouchID = null;
