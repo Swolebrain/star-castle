@@ -49,6 +49,8 @@ export default class Ship extends Entity{
                             -this.sprite.height*this.spriteScale/2,
                           this.sprite.width*this.spriteScale,
                           this.sprite.height*this.spriteScale);
+    ctx.fillStyle = "#0000FF";
+    ctx.fillRect(-1, -1, 3,3);
     ctx.restore();
     if(this.controls.render) this.controls.render(ctx);
   }
@@ -65,9 +67,25 @@ export default class Ship extends Entity{
       if (ret) return;
       shield.shieldSections.forEach((shieldSection,i2)=>{
         // console.log(shieldSection.startAngle);
-        if (shieldSection.startAngle < polarAngle &&
-          shieldSection.startAngle + shieldSection.arcRadians > polarAngle &&
-          thisDistanceToCenter - radius < shieldSection.radius){
+        let shieldAngle = (shieldSection.startAngle + shield.rotationOffset );
+        let startAngle = (shieldAngle)% (Math.PI*2);
+        let endAngle = (startAngle + shieldSection.arcRadians);
+        let endAngle2 = endAngle % (2*Math.PI);
+        let opening = 2*Math.PI - shieldSection.arcRadians;
+        // let openingStart = startAngle - opening > 0 ? startAngle - opening : 2*Math.PI+opening;
+        // if (Math.random()<0.1)
+        // console.log(Math.round(startAngle*100)/100,
+        //     Math.round(endAngle *100)/100, Math.round(endAngle2 *100)/100, Math.round(opening*100)/100 );
+
+        if (thisDistanceToCenter - radius > shieldSection.radius){
+          return;
+        }
+        let shipArcSize = this.sprite.width*this.spriteScale/(shieldSection.radius);
+
+        if ( opening <=  shipArcSize ||
+          (startAngle < endAngle2 && polarAngle > startAngle && polarAngle < endAngle2) ||
+          (endAngle2 < startAngle && (polarAngle < endAngle2 || polarAngle > startAngle))
+         ){
               // console.log('Collided with shield', i, "section", i2);
               ret = {x: Math.cos(polarAngle)*10,
                       y: Math.sin(polarAngle)*10
@@ -95,6 +113,8 @@ export default class Ship extends Entity{
     let x = this.x - window.innerWidth/2,
         y = window.innerHeight/2 - this.y;
     let angle =  Math.atan2(y, x);
-    return (Math.PI - angle + Math.PI) % (2* Math.PI);
+    angle = (Math.PI - angle + Math.PI) % (2* Math.PI);
+    // console.log(angle);
+    return angle;
   }
 }

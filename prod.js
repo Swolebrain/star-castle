@@ -187,6 +187,7 @@ var Shield = function (_Entity) {
     value: function render(ctx) {
       var _this2 = this;
 
+      // console.log(this.rotationOffset);
       this.shieldSections.forEach(function (section) {
         return section.render(ctx, _this2.rotationOffset);
       });
@@ -194,6 +195,8 @@ var Shield = function (_Entity) {
       ctx.translate(window.innerWidth / 2, window.innerHeight / 2);
       ctx.rotate(this.rotationOffset);
       ctx.fillRect(-1, -10, 2, 20);
+      ctx.fillStyle = "red";
+      ctx.fillRect(-1, -10, 2, 2);
       ctx.restore();
     }
   }, {
@@ -316,11 +319,28 @@ var ShieldSection = function (_Entity) {
   _createClass(ShieldSection, [{
     key: "render",
     value: function render(ctx, offset) {
+      ctx.save();
       ctx.beginPath();
       ctx.arc(this.centerX, this.centerY, this.radius, this.startAngle + offset, this.startAngle + this.arcRadians + offset);
 
       ctx.stroke();
       ctx.closePath();
+      // ctx.beginPath();
+      // ctx.strokeStyle = "red";
+      //
+      // ctx.arc(this.centerX, this.centerY,
+      //     this.radius,
+      //     this.startAngle+offset, this.startAngle+offset+Math.PI*0.05);
+      // ctx.stroke();
+      // ctx.closePath()
+      // ctx.beginPath();
+      // ctx.lineWidth = 4;
+      // ctx.arc(this.centerX, this.centerY,
+      //     this.radius,
+      //     this.startAngle+offset, this.startAngle+offset+Math.PI*0.01);
+      // ctx.stroke();
+      // ctx.closePath();
+      ctx.restore();
     }
   }]);
 
@@ -432,7 +452,22 @@ var Ship = function (_Entity) {
         if (ret) return;
         shield.shieldSections.forEach(function (shieldSection, i2) {
           // console.log(shieldSection.startAngle);
-          if (shieldSection.startAngle < polarAngle && shieldSection.startAngle + shieldSection.arcRadians > polarAngle && thisDistanceToCenter - radius < shieldSection.radius) {
+          var shieldAngle = shieldSection.startAngle + shield.rotationOffset;
+          var startAngle = shieldAngle % (Math.PI * 2);
+          var endAngle = startAngle + shieldSection.arcRadians;
+          var endAngle2 = endAngle % (2 * Math.PI);
+          var opening = 2 * Math.PI - shieldSection.arcRadians;
+          // let openingStart = startAngle - opening > 0 ? startAngle - opening : 2*Math.PI+opening;
+          // if (Math.random()<0.1)
+          // console.log(Math.round(startAngle*100)/100,
+          //     Math.round(endAngle *100)/100, Math.round(endAngle2 *100)/100, Math.round(opening*100)/100 );
+
+          if (thisDistanceToCenter - radius > shieldSection.radius) {
+            return;
+          }
+          var shipArcSize = _this.sprite.width * _this.spriteScale / shieldSection.radius;
+
+          if (opening <= shipArcSize || startAngle < endAngle2 && polarAngle > startAngle && polarAngle < endAngle2 || endAngle2 < startAngle && (polarAngle < endAngle2 || polarAngle > startAngle)) {
             // console.log('Collided with shield', i, "section", i2);
             ret = { x: Math.cos(polarAngle) * 10,
               y: Math.sin(polarAngle) * 10
@@ -496,6 +531,8 @@ var Ship = function (_Entity) {
       ctx.rotate(this.controls.getAngle());
       ctx.drawImage(this.propulsionSprite, -(this.sprite.width / 2 + this.propulsionSprite.width / 1.15) * this.spriteScale, -this.propulsionSprite.height * this.spriteScale / 2, this.propulsionSprite.width * this.spriteScale, this.propulsionSprite.height * this.spriteScale);
       ctx.drawImage(this.sprite, -this.sprite.width * this.spriteScale / 2, -this.sprite.height * this.spriteScale / 2, this.sprite.width * this.spriteScale, this.sprite.height * this.spriteScale);
+      ctx.fillStyle = "#0000FF";
+      ctx.fillRect(-1, -1, 3, 3);
       ctx.restore();
       if (this.controls.render) this.controls.render(ctx);
     }
@@ -522,7 +559,9 @@ var Ship = function (_Entity) {
       var x = this.x - window.innerWidth / 2,
           y = window.innerHeight / 2 - this.y;
       var angle = Math.atan2(y, x);
-      return (Math.PI - angle + Math.PI) % (2 * Math.PI);
+      angle = (Math.PI - angle + Math.PI) % (2 * Math.PI);
+      // console.log(angle);
+      return angle;
     }
   }]);
 

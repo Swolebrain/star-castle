@@ -11,7 +11,10 @@ preloader().then(img=>{
 
 let radius1 = Math.round(Math.min(window.innerWidth, window.innerHeight)*.2);
 const initializeEntities = ()=>({
-  shields: [new Shield(radius1, 12), new Shield(radius1*0.66, 10), new Shield(radius1*0.33, 6)],
+  shields: [new Shield(radius1, 12),
+    new Shield(radius1*0.66, 10), 
+    new Shield(radius1*0.33, 6)
+  ],
   projectiles: [],
   player: new Ship(images, 100)
 });

@@ -24,11 +24,14 @@ export default class Shield extends Entity{
     }
   }
   render(ctx){
+    // console.log(this.rotationOffset);
     this.shieldSections.forEach(section=>section.render(ctx, this.rotationOffset));
     ctx.save();
     ctx.translate(window.innerWidth/2, window.innerHeight/2);
     ctx.rotate(this.rotationOffset);
     ctx.fillRect(-1, -10, 2, 20);
+    ctx.fillStyle = "red";
+    ctx.fillRect(-1, -10, 2, 2);
     ctx.restore();
   }
   sections(){
